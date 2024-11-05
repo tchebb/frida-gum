@@ -442,6 +442,7 @@ gum_quick_process_on_stalker_gc_timer_tick (GumQuickProcess * self)
 
 GUMJS_DEFINE_FUNCTION (gumjs_process_find_module_by_name)
 {
+  GumQuickScope scope = GUM_QUICK_SCOPE_INIT (core);
   GumQuickFindModuleByNameContext fc;
   gchar * allocated_name = NULL;
 
@@ -457,8 +458,12 @@ GUMJS_DEFINE_FUNCTION (gumjs_process_find_module_by_name)
   fc.name = allocated_name;
 #endif
 
+  _gum_quick_scope_suspend (&scope);
+
   gum_process_enumerate_modules (
       (GumFoundModuleFunc) gum_store_module_if_name_matches, &fc);
+
+  _gum_quick_scope_resume (&scope);
 
   g_free (allocated_name);
 
@@ -494,6 +499,7 @@ gum_store_module_if_name_matches (const GumModuleDetails * details,
 
 GUMJS_DEFINE_FUNCTION (gumjs_process_enumerate_modules)
 {
+  GumQuickScope scope = GUM_QUICK_SCOPE_INIT (core);
   GumQuickMatchContext mc;
 
   if (!_gum_quick_args_parse (args, "F{onMatch,onComplete}", &mc.on_match,
@@ -503,7 +509,11 @@ GUMJS_DEFINE_FUNCTION (gumjs_process_enumerate_modules)
   mc.ctx = ctx;
   mc.parent = gumjs_get_parent_module (core);
 
+  _gum_quick_scope_suspend (&scope);
+
   gum_process_enumerate_modules ((GumFoundModuleFunc) gum_emit_module, &mc);
+
+  _gum_quick_scope_resume (&scope);
 
   return _gum_quick_maybe_call_on_complete (ctx, mc.result, mc.on_complete);
 }

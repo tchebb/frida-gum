@@ -1073,6 +1073,7 @@ gum_enumerate_soinfo (GumFoundSoinfoFunc func,
 
   api = gum_linker_api_get ();
 
+  // tch: Takes the lock!
   pthread_mutex_lock (api->dl_mutex);
 
   somain = api->solist_get_somain ();
