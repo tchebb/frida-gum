@@ -631,48 +631,30 @@ gum_interceptor_backend_prepare_trampoline (GumInterceptorBackend * self,
 
   *need_deflector = FALSE;
 
-  if (gum_arm64_relocator_can_relocate (function_address, 16,
+  GumAddressSpec spec;
+  gsize alignment;
+
+
+  if (gum_arm64_relocator_can_relocate (function_address, 4,
       GUM_SCENARIO_ONLINE, &redirect_limit, &data->scratch_reg))
   {
-    data->redirect_code_size = 16;
+    data->redirect_code_size = 4;
 
-    ctx->trampoline_slice = gum_code_allocator_alloc_slice (self->allocator);
+    spec.near_address = function_address;
+    spec.max_distance = GUM_ARM64_B_MAX_DISTANCE;
+    alignment = 0;
   }
   else
   {
-    GumAddressSpec spec;
-    gsize alignment;
+    return FALSE;
+  }
 
-    if (redirect_limit >= 8)
-    {
-      data->redirect_code_size = 8;
-
-      spec.near_address = GSIZE_TO_POINTER (
-          GPOINTER_TO_SIZE (function_address) &
-          ~((gsize) (GUM_ARM64_LOGICAL_PAGE_SIZE - 1)));
-      spec.max_distance = GUM_ARM64_ADRP_MAX_DISTANCE;
-      alignment = GUM_ARM64_LOGICAL_PAGE_SIZE;
-    }
-    else if (redirect_limit >= 4)
-    {
-      data->redirect_code_size = 4;
-
-      spec.near_address = function_address;
-      spec.max_distance = GUM_ARM64_B_MAX_DISTANCE;
-      alignment = 0;
-    }
-    else
-    {
-      return FALSE;
-    }
-
-    ctx->trampoline_slice = gum_code_allocator_try_alloc_slice_near (
-        self->allocator, &spec, alignment);
-    if (ctx->trampoline_slice == NULL)
-    {
-      ctx->trampoline_slice = gum_code_allocator_alloc_slice (self->allocator);
-      *need_deflector = TRUE;
-    }
+  ctx->trampoline_slice = gum_code_allocator_try_alloc_slice_near (
+      self->allocator, &spec, alignment);
+  if (ctx->trampoline_slice == NULL)
+  {
+    ctx->trampoline_slice = gum_code_allocator_alloc_slice (self->allocator);
+    *need_deflector = TRUE;
   }
 
   if (data->scratch_reg == ARM64_REG_INVALID)
