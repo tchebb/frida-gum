@@ -879,8 +879,8 @@ _gum_interceptor_backend_destroy_trampoline (GumInterceptorBackend * self,
   }
 #endif
 
-  gum_code_slice_unref (ctx->trampoline_slice);
-  gum_code_deflector_unref (ctx->trampoline_deflector);
+  //gum_code_slice_unref (ctx->trampoline_slice);
+  //gum_code_deflector_unref (ctx->trampoline_deflector);
   ctx->trampoline_slice = NULL;
   ctx->trampoline_deflector = NULL;
 }
